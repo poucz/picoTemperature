@@ -1,3 +1,6 @@
 [submodule "src/jolib"]
 	path = src/jolib
 	url = git@github.com:poucz/jolib.git
+[submodule "src/pico-onewire"]
+	path = src/pico-onewire
+	url = https://github.com/adamboardman/pico-onewire/tree/main

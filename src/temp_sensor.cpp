@@ -1,0 +1,60 @@
+#include "temp_sensor.h"
+
+#include "hardware/gpio.h"
+
+
+
+TEMP_SENSOR::TEMP_SENSOR(int gpio):BASE_MODUL("temp_sensor"+std::to_string(gpio)),gpio_data(gpio),oneWire(nullptr),currentTemp(0){
+    oneWire=new One_wire(gpio_data);
+    oneWire->init();
+	gpio_init(gpio_data);
+	gpio_set_dir(gpio_data, GPIO_IN);
+	gpio_pull_up(gpio_data);
+	sleep_ms(1);
+
+
+    mutex_init(&mutex_currentTemp);
+    rescanAddress();
+}
+
+
+TEMP_SENSOR::~TEMP_SENSOR(){
+}
+
+
+void TEMP_SENSOR::rescanAddress(){
+    sensors_Address.clear();
+    rom_address_t null_address{};
+    int count = oneWire->find_and_count_devices_on_bus();
+    for (int i = 0; i < count; i++) {
+		auto address = One_wire::get_address(i);
+        uint64_t addr=One_wire::to_uint64(address);
+        sensors_Address.push_back(address);
+		printf("On gpio:%i sensors:%016llX\n",gpio_data, addr);
+	}
+}
+
+int16_t TEMP_SENSOR::getTemp() const{
+    float temp;
+    mutex_enter_blocking(&mutex_currentTemp);
+        temp=currentTemp;
+    mutex_exit(&mutex_currentTemp);
+    return (int)(10*temp);
+}
+
+
+void TEMP_SENSOR::procesS(){
+    
+    for (rom_address_t addr : sensors_Address){
+        float temp=oneWire->temperature(addr,false);
+        
+        mutex_enter_blocking(&mutex_currentTemp);
+        currentTemp=temp;
+        mutex_exit(&mutex_currentTemp);
+
+        //currentTemp=currentTemp*0.0625;
+        //printf("Gpio: %i sensor:%016llX\ttemp:%3.1f*C\n",gpio_data, One_wire::to_uint64(addr),currentTemp);
+    }
+    rom_address_t null_addr;
+    oneWire->convert_temperature(null_addr,false,true);
+}

@@ -4,15 +4,45 @@
 #include "hardware/uart.h"
 #include "hardware/watchdog.h"
 #include "pico/binary_info.h"
+#include "pico/multicore.h"
 #include "hardware/timer.h"
 
 #include "pico/bootrom.h"
 
+#include <time.h>
 
 #include "jolibMainHelper.h"
 
-#include "modbus.h"
 #include "serial_port.h"
+#include "serial_port_dummy.h"
+#include "temp_sensor.h"
+#include "gpio_pico.h"
+#include "modbus_api.h"
+
+#include "pico/serial_pico.h"
+
+#include "pico-onewire/api/one_wire.h"
+
+
+
+std::vector<TEMP_SENSOR *> sensor_list;
+
+
+void mainCore2(){
+    MAIN_HELPER modul_helper;
+    TEMP_SENSOR sensor1(15);//GP15- ping 20 on pico 
+
+    for (std::vector<TEMP_SENSOR *>::iterator it = sensor_list.begin(); it != sensor_list.end(); ++it) {
+	    (*it)->Process();
+        modul_helper.addModul(*it);
+    }
+
+    static absolute_time_t timestamp;
+    while (1) {
+		timestamp = get_absolute_time();
+        modul_helper.loop(timestamp._private_us_since_boot);
+    }
+}
 
 
 int main()
@@ -22,31 +52,52 @@ int main()
     bool error=false;
     MAIN_HELPER modul_helper;
     
-    //SerialPico ser(true);
-    //GPIO_PICO gpio;
+    sensor_list.push_back(new TEMP_SENSOR(15));
+    sensor_list.push_back(new TEMP_SENSOR(14));
 
-    //modul_helper.addModul(&ser);
-    //modul_helper.addModul(&gpio);
+    //SerialPico ser(true);
+    SerialPortDummy ser;
+    MODBUS_API modbus(sensor_list,&ser,5);
+    GPIO_PICO gpio;
+
+
+
+    modul_helper.addModul(&ser);
+    modul_helper.addModul(&modbus);
+    modul_helper.addModul(&gpio);
+
+    
+
     
     static absolute_time_t timestamp;
+    gpio.setBlink(1000,50);
+
+    multicore_launch_core1(mainCore2);
 
 	while (1) {
 		timestamp = get_absolute_time();
         modul_helper.loop(timestamp._private_us_since_boot);
+
+        for (const auto &byte : ser.getData4send()) {
+            putchar(byte);
+        }
+
 		userInput = getchar_timeout_us(0);//us
 		switch(userInput){
-            case 'a':
-                printf("Address is: %d\n", gpio.getAddress());
-            break;
-            case 'g':
-                printf("Test: sizeof %d\n", sizeof(zaluzSettingArray)/sizeof(ZALUZ_SETTING));
-            break;
-            case 'f':
-                printf("Test: off   %d\n",(zaluzSettingArray+1)->maxDownTime);
-                printf("Test: off   %d\n",zaluzSettingArray[1].maxDownTime);
+            case 't':
+                {
+                    int i=0;
+                    for (std::vector<TEMP_SENSOR *>::iterator it = sensor_list.begin(); it != sensor_list.end(); ++it) {
+                        printf("Printing temps: %d \t %d*C\n",i,(*it)->getTemp());
+                        i++;
+                    }
+                }
             break;
             case 's':
-                ser.sendStr(std::string("AHOJ"));
+                puts("Rescanning devices...\n");
+                for (std::vector<TEMP_SENSOR *>::iterator it = sensor_list.begin(); it != sensor_list.end(); ++it) {
+                    (*it)->rescanAddress();
+                }
             break;
 			case 'r':
 				puts("REBOOT\n");
@@ -54,6 +105,13 @@ int main()
 			break;
 			case PICO_ERROR_TIMEOUT:
 			break;
+            default:
+                for(;userInput!=PICO_ERROR_TIMEOUT;){
+                    //printf("Appending %d\n",userInput);
+                    ser.receive(userInput);
+                    userInput = getchar_timeout_us(10);//us
+                }
+            break;
 		}
 	}
     return 0;

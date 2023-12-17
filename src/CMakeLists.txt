@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
 if(CMAKE_CXX_COMPILER MATCHES "arm")
-    message("CONFIG FOR RASPERRY PICO")
-    include(pico_sdk_import.cmake)
     set(SOURCE_FILES  main.cpp)
 else()
     message("CONFIG FOR LINUX")
@@ -10,32 +8,20 @@ else()
 endif()
 
 set(PROJECT_NAME picoTemperature)
-
 project(${PROJECT_NAME} C CXX ASM)
 
+set(TARGET_LIBS jolib pico_one_wire)
 
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 17)
-
-set(TARGET_LIBS jolib)
-
-
-
-
-
-
-set(SOURCE_FILES ${SOURCE_FILES}  ${CMAKE_CURRENT_BINARY_DIR}/srcVersion.cpp )
+set(SOURCE_FILES ${SOURCE_FILES}  ${CMAKE_CURRENT_BINARY_DIR}/srcVersion.cpp temp_sensor.cpp gpio_pico.cpp modbus_api.cpp)
 
 add_executable ( ${PROJECT_NAME} ${SOURCE_FILES})
 
 if(CMAKE_SYSTEM_PROCESSOR STREQUAL "cortex-m0plus")
-    pico_sdk_init()
-
     pico_enable_stdio_usb(${PROJECT_NAME} 1)
-    pico_enable_stdio_uart(${PROJECT_NAME} 0)
+    pico_enable_stdio_uart(${PROJECT_NAME} 1)
     pico_add_extra_outputs(${PROJECT_NAME})
     #target_link_libraries(${PROJECT_NAME} pico_stdlib jolib)
-    set(TARGET_LIBS ${TARGET_LIBS} pico_stdlib hardware_i2c hardware_uart )
+    set(TARGET_LIBS ${TARGET_LIBS} pico_stdlib hardware_i2c hardware_uart pico_multicore jopicolib)
 
     add_custom_target(pouDeploy_${PROJECT_NAME}
                 DEPENDS ${PROJECT_NAME}
@@ -50,11 +36,9 @@ endif()
 
 
 add_subdirectory(jolib)
+add_subdirectory(pico-onewire)
 
-target_link_libraries ( ${PROJECT_NAME} ${TARGET_LIBS})
-
-
-
+target_link_libraries ( ${PROJECT_NAME} ${TARGET_LIBS} )
 
 
 ADD_CUSTOM_COMMAND(
