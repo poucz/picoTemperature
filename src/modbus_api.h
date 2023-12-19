@@ -12,7 +12,7 @@
 *
 *   HOLDING REGISTERS - FCE3 read, FCE6 write, FCE16 multi write
 *   ^address ^ description ^
-*   | 0x0001 | Rescan sensors|
+*   | 0x0001 | sensor count -READ|
 *
 *       SW version + uptime 32b value
 *   | 0x1000 | SW GIT version  hight 16b|
@@ -48,8 +48,8 @@ class MODBUS_API: public MODBUS{
 public:
     MODBUS_API(std::vector<TEMP_SENSOR *> temps, SerialPort * port, uint8_t modbus_adddr);
 
-    virtual bool writeHolding(uint16_t address, uint16_t data)override;
     virtual int16_t readOneInput(uint16_t address)override;////<čtenni 16bitové slova
+    int16_t readHolding(uint16_t address)override;
 protected:
     std::vector<TEMP_SENSOR *> sensors;
 

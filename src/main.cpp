@@ -30,7 +30,6 @@ std::vector<TEMP_SENSOR *> sensor_list;
 
 void mainCore2(){
     MAIN_HELPER modul_helper;
-    TEMP_SENSOR sensor1(15);//GP15- ping 20 on pico 
 
     for (std::vector<TEMP_SENSOR *>::iterator it = sensor_list.begin(); it != sensor_list.end(); ++it) {
 	    (*it)->Process();
@@ -54,6 +53,7 @@ int main()
     
     sensor_list.push_back(new TEMP_SENSOR(15));
     sensor_list.push_back(new TEMP_SENSOR(14));
+    sensor_list.push_back(new TEMP_SENSOR(13));
 
     //SerialPico ser(true);
     SerialPortDummy ser;
@@ -91,12 +91,6 @@ int main()
                         printf("Printing temps: %d \t %d*C\n",i,(*it)->getTemp());
                         i++;
                     }
-                }
-            break;
-            case 's':
-                puts("Rescanning devices...\n");
-                for (std::vector<TEMP_SENSOR *>::iterator it = sensor_list.begin(); it != sensor_list.end(); ++it) {
-                    (*it)->rescanAddress();
                 }
             break;
 			case 'r':
