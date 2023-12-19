@@ -27,6 +27,7 @@ protected:
 
     int rescanAddress();///!< Je protected protoze bezim na jinem CPU
     void procesS() override;
+    void proces60S() override;
 };
 
 

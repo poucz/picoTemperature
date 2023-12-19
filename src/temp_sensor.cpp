@@ -57,17 +57,24 @@ int16_t TEMP_SENSOR::getTemp() const{
 
 
 void TEMP_SENSOR::procesS(){
-    
+    float temp=-255;
     for (rom_address_t addr : sensors_Address){
-        float temp=oneWire->temperature(addr,false);
-        
-        mutex_enter_blocking(&mutex_currentTemp);
-        currentTemp_mut=temp;
-        mutex_exit(&mutex_currentTemp);
-
-        //currentTemp=currentTemp*0.0625;
-        //printf("Gpio: %i sensor:%016llX\ttemp:%3.1f*C\n",gpio_data, One_wire::to_uint64(addr),currentTemp);
+        temp=oneWire->temperature(addr,false);
+        if(temp==oneWire->invalid_conversion || temp==oneWire->not_controllable){
+            temp=-255;
+        }
+        //printf("Gpio: %i sensor:%016llX\ttemp:%3.1f*C\n",gpio_data, One_wire::to_uint64(addr),temp);
     }
     rom_address_t null_addr;
     oneWire->convert_temperature(null_addr,false,true);
+
+    mutex_enter_blocking(&mutex_currentTemp);
+        currentTemp_mut=temp;
+    mutex_exit(&mutex_currentTemp);
+}
+
+
+
+void TEMP_SENSOR::proces60S(){
+    rescanAddress();    
 }

@@ -9,6 +9,12 @@ MODBUS_API::MODBUS_API(std::vector<TEMP_SENSOR *> temps, SerialPort * port,uint8
 
 int16_t MODBUS_API::readHolding(uint16_t address){
     int16_t result=0;
+    if(address==0x01){
+         for (std::vector<TEMP_SENSOR *>::iterator it = sensors.begin(); it != sensors.end(); ++it) {
+            result+=(*it)->getSensorCount();
+        }
+    }
+
     if(address==0x1000){
         result= git_version_int()>>16;
     }else if(address==0x1001){
@@ -19,6 +25,7 @@ int16_t MODBUS_API::readHolding(uint16_t address){
         result= timestampS&0xffff;
     }
     result=swapEndian(result);
+    return result;
 }
 
 
