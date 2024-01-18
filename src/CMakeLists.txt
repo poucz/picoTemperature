@@ -21,8 +21,16 @@ if(CMAKE_SYSTEM_PROCESSOR STREQUAL "cortex-m0plus")
     pico_enable_stdio_uart(${PROJECT_NAME} 1)
     pico_add_extra_outputs(${PROJECT_NAME})
     #target_link_libraries(${PROJECT_NAME} pico_stdlib jolib)
-    set(TARGET_LIBS ${TARGET_LIBS} pico_stdlib hardware_i2c hardware_uart pico_multicore jopicolib)
 
+    set(TARGET_LIBS ${TARGET_LIBS}
+        pico_stdlib
+        hardware_i2c
+        hardware_uart
+        pico_multicore
+        jopicolib
+    )
+
+ 
     add_custom_target(pouDeploy_${PROJECT_NAME}
                 DEPENDS ${PROJECT_NAME}
                 COMMAND ./flash.sh ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.uf2

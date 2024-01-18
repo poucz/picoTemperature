@@ -13,7 +13,7 @@ void GPIO_PICO::setStatusLed(bool on){
     gpio_put(LED_PIN, on);
 }
 
-bool GPIO_PICO::setGPIO(int number, bool status){
+bool GPIO_PICO::setGPIO(int, bool){
     return false;
 }
 

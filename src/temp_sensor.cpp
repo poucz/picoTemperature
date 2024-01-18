@@ -23,7 +23,7 @@ TEMP_SENSOR::~TEMP_SENSOR(){
 
 int TEMP_SENSOR::rescanAddress(){
     sensors_Address.clear();
-    rom_address_t null_address{};
+    //rom_address_t null_address{};
     int count = oneWire->find_and_count_devices_on_bus();
     for (int i = 0; i < count; i++) {
 		auto address = One_wire::get_address(i);

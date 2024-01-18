@@ -23,9 +23,13 @@
 
 #include "pico-onewire/api/one_wire.h"
 
+#include "wifi.h"
+#include "mqtt_pou.h"
+
 
 
 std::vector<TEMP_SENSOR *> sensor_list;
+#define USET_DUMMY_SERIAL_PORT
 
 
 void mainCore2(){
@@ -44,30 +48,35 @@ void mainCore2(){
 }
 
 
+
 int main()
 {
     stdio_init_all();
     int userInput;
-    bool error=false;
     MAIN_HELPER modul_helper;
     
     sensor_list.push_back(new TEMP_SENSOR(15));
     sensor_list.push_back(new TEMP_SENSOR(14));
     sensor_list.push_back(new TEMP_SENSOR(13));
 
-    //SerialPico ser(true);
-    SerialPortDummy ser;
+    #ifdef USET_DUMMY_SERIAL_PORT
+        SerialPortDummy ser;
+    #else
+        SerialPico ser(true);
+    #endif
+
     MODBUS_API modbus(sensor_list,&ser,5);
     GPIO_PICO gpio;
 
-
+    WIFI wifi;
+    MQTT mqtt;
 
     modul_helper.addModul(&ser);
     modul_helper.addModul(&modbus);
     modul_helper.addModul(&gpio);
 
-    
-
+    modul_helper.addModul(&wifi);
+    modul_helper.addModul(&mqtt);
     
     static absolute_time_t timestamp;
     gpio.setBlink(1000,50);
@@ -78,9 +87,11 @@ int main()
 		timestamp = get_absolute_time();
         modul_helper.loop(timestamp._private_us_since_boot);
 
-        for (const auto &byte : ser.getData4send()) {
-            putchar(byte);
-        }
+        #ifdef USET_DUMMY_SERIAL_PORT
+            for (const auto &byte : ser.getData4send()) {
+                putchar(byte);
+            }
+        #endif
 
 		userInput = getchar_timeout_us(0);//us
 		switch(userInput){
@@ -92,6 +103,9 @@ int main()
                         i++;
                     }
                 }
+            break;
+            case 'm':
+                //mqtt.public_msg("1","teplota");
             break;
 			case 'r':
 				puts("REBOOT\n");
