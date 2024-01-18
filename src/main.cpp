@@ -49,6 +49,35 @@ void mainCore2(){
 
 
 
+
+class MQTT_PUBLICER:public BASE_MODUL{
+public:
+    MQTT_PUBLICER(std::vector<TEMP_SENSOR *> temps, MQTT * mqtt_client):
+        BASE_MODUL("MqttPublic"),
+        sensors(temps),
+        mqtt(mqtt_client){
+    }
+protected:
+    std::vector<TEMP_SENSOR *> sensors;
+    MQTT * mqtt;
+    
+    void proces10S()override{
+        std::string topic;
+        std::string value;
+        printf("MQTT publishing");
+
+        for (std::vector<TEMP_SENSOR *>::iterator it = sensors.begin(); it != sensors.end(); ++it) {
+            int16_t temperature=(*it)->getTemp();
+            mqtt->public_msg(num2str_deci(temperature),"Temp:"+num2str((*it)->getGpio()));
+            printf("\t T:%d\t",temperature);
+        }
+        printf("\n");
+    };
+
+    void proces60S()override{};
+};
+
+
 int main()
 {
     stdio_init_all();
@@ -70,6 +99,7 @@ int main()
 
     WIFI wifi;
     MQTT mqtt;
+    MQTT_PUBLICER mqtt_publicer(sensor_list,&mqtt);
 
     modul_helper.addModul(&ser);
     modul_helper.addModul(&modbus);
@@ -77,6 +107,7 @@ int main()
 
     modul_helper.addModul(&wifi);
     modul_helper.addModul(&mqtt);
+    modul_helper.addModul(&mqtt_publicer);
     
     static absolute_time_t timestamp;
     gpio.setBlink(1000,50);
@@ -105,7 +136,7 @@ int main()
                 }
             break;
             case 'm':
-                //mqtt.public_msg("1","teplota");
+                mqtt.public_msg("1","teplota");
             break;
 			case 'r':
 				puts("REBOOT\n");

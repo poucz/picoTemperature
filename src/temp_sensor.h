@@ -14,7 +14,8 @@ public:
     virtual ~TEMP_SENSOR();
 
     int getSensorCount()const;
-    int16_t getTemp()const;
+    int16_t getTemp()const;//<vraci 10xteplotu
+    int getGpio()const;//<vraci GPIO ktere se pouziva
 protected:
     int gpio_data;
     One_wire * oneWire;

@@ -56,6 +56,10 @@ int16_t TEMP_SENSOR::getTemp() const{
 }
 
 
+int TEMP_SENSOR::getGpio()const{
+    return gpio_data;
+}
+
 void TEMP_SENSOR::procesS(){
     float temp=-255;
     for (rom_address_t addr : sensors_Address){
