@@ -2,7 +2,8 @@
 
 # Zapojení
 
-Každý senzor na samostatném GPIO.
+**Každý senzor na samostatném GPIO.**
+
 Takže mě už nezajímají adresy čidel - prostě první čidlo (GPIO1) je koupelna a je to tak vždy.
 
 Komunikace **1W** využívá aktivní čekání, takže vyčtení teploty, zahájení měření teploty atd. trvá nějakou (ne malou) dobu. Proto je kód s komunikací **1W** umístěn do druhého jádra procesoru.
@@ -16,6 +17,14 @@ Měření je prováděno každých 10s.
 
 Komunikace modbusem je potom v hlavním vlákně.
 
+
+## Mqtt
+Pokud je použit Raspberry pico "W" musí se nastavit v CmakeList.txt **set(PICO_BOARD "pico_w")**
+
+Potom se publikuje do MQTT serveru ve tvaru:
+
+- Topic: *picoTemp*
+- Payload: json *{"T_GPIO: temp",..... ,"signal": wifi signal}*
 
 
 ## Schéma desky

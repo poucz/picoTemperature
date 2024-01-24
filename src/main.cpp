@@ -52,29 +52,36 @@ void mainCore2(){
 
 class MQTT_PUBLICER:public BASE_MODUL{
 public:
-    MQTT_PUBLICER(std::vector<TEMP_SENSOR *> temps, MQTT * mqtt_client):
+    MQTT_PUBLICER(std::vector<TEMP_SENSOR *> temps, MQTT * mqtt_client, WIFI * wifi_modul):
         BASE_MODUL("MqttPublic"),
         sensors(temps),
-        mqtt(mqtt_client){
+        mqtt(mqtt_client),
+        wifi(wifi_modul){
     }
 protected:
     std::vector<TEMP_SENSOR *> sensors;
     MQTT * mqtt;
+    WIFI * wifi;
     
     void proces10S()override{
-        std::string topic;
         std::string value;
         printf("MQTT publishing");
-
+        value="{";
         for (std::vector<TEMP_SENSOR *>::iterator it = sensors.begin(); it != sensors.end(); ++it) {
             int16_t temperature=(*it)->getTemp();
-            mqtt->public_msg(num2str_deci(temperature),"Temp:"+num2str((*it)->getGpio()));
-            printf("\t T:%d\t",temperature);
+            //mqtt->public_msg(num2str_deci(temperature),"Temp:"+num2str((*it)->getGpio()));
+            value+="\"T_"+num2str((*it)->getGpio())+"\":";
+            value+=num2str_deci(temperature)+",";
         }
-        printf("\n");
+        value+="signal:"+num2str(wifi->getSignal());
+        value+="}";
+        printf("%s\n",value.c_str());
+        mqtt->public_msg(value,"picoTemp");
     };
 
-    void proces60S()override{};
+    void proces60S()override{
+        
+    };
 };
 
 
@@ -99,7 +106,7 @@ int main()
 
     WIFI wifi;
     MQTT mqtt;
-    MQTT_PUBLICER mqtt_publicer(sensor_list,&mqtt);
+    MQTT_PUBLICER mqtt_publicer(sensor_list,&mqtt,&wifi);
 
     modul_helper.addModul(&ser);
     modul_helper.addModul(&modbus);
