@@ -1,5 +1,13 @@
 cmake_minimum_required(VERSION 3.16)
 
+
+
+set(WIFI_SSID "jopr" CACHE INTERNAL "WiFi SSID for examples")
+set(WIFI_PASSWORD "ytits1234" CACHE INTERNAL "WiFi PASS for examples")
+set(MQTT_SERVER_HOST "192.168.2.86" CACHE INTERNAL "MQTT server address")
+set(MQTT_SERVER_PORT 1883 CACHE INTERNAL "MQTT server port")
+
+
 if(CMAKE_CXX_COMPILER MATCHES "arm")
     message("CONFIG FOR RASPERRY PICO")
     set(PICO_BOARD "pico_w")

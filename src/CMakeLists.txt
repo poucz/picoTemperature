@@ -47,7 +47,14 @@ add_subdirectory(jolib)
 add_subdirectory(pico-onewire)
 
 target_link_libraries ( ${PROJECT_NAME} ${TARGET_LIBS} )
-
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+            WIFI_SSID=\"${WIFI_SSID}\"
+            WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
+            TEST_TCP_SERVER_IP=\"${TEST_TCP_SERVER_IP}\"
+            MQTT_SERVER_HOST=\"${MQTT_SERVER_HOST}\"
+            MQTT_SERVER_PORT=${MQTT_SERVER_PORT}
+            NO_SYS=1
+            )
 
 ADD_CUSTOM_COMMAND(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/srcVersion.cpp

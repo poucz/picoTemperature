@@ -73,7 +73,7 @@ protected:
             value+="\"T_"+num2str((*it)->getGpio())+"\":";
             value+=num2str_deci(temperature)+",";
         }
-        value+="signal:"+num2str(wifi->getSignal());
+        value+="\"signal\":"+num2str(wifi->getSignal());
         value+="}";
         printf("%s\n",value.c_str());
         mqtt->public_msg(value,"picoTemp");
@@ -90,10 +90,20 @@ int main()
     stdio_init_all();
     int userInput;
     MAIN_HELPER modul_helper;
+
     
-    sensor_list.push_back(new TEMP_SENSOR(15));
-    sensor_list.push_back(new TEMP_SENSOR(14));
-    sensor_list.push_back(new TEMP_SENSOR(13));
+    sensor_list.push_back(new TEMP_SENSOR(28)); //GP28-T1
+    sensor_list.push_back(new TEMP_SENSOR(27)); //GP27-T2
+    sensor_list.push_back(new TEMP_SENSOR(26)); //GP26-T3
+    sensor_list.push_back(new TEMP_SENSOR(18)); //GP18-T4
+    sensor_list.push_back(new TEMP_SENSOR(17)); //GP17-T5
+    sensor_list.push_back(new TEMP_SENSOR(16)); //GP16-T6
+    sensor_list.push_back(new TEMP_SENSOR(13)); //GP13-T7
+    sensor_list.push_back(new TEMP_SENSOR(12)); //GP12-T8
+    sensor_list.push_back(new TEMP_SENSOR(6));  //GP6-T9
+    sensor_list.push_back(new TEMP_SENSOR(5));  //GP5-T10
+    sensor_list.push_back(new TEMP_SENSOR(4));  //GP4-T11
+    sensor_list.push_back(new TEMP_SENSOR(3));  //GP3-T12
 
     #ifdef USET_DUMMY_SERIAL_PORT
         SerialPortDummy ser;
@@ -104,17 +114,20 @@ int main()
     MODBUS_API modbus(sensor_list,&ser,5);
     GPIO_PICO gpio;
 
+#ifdef PICO_W
     WIFI wifi;
-    MQTT mqtt;
+    MQTT mqtt("192.168.2.86",1881);
     MQTT_PUBLICER mqtt_publicer(sensor_list,&mqtt,&wifi);
+    modul_helper.addModul(&wifi);
+    modul_helper.addModul(&mqtt);
+    modul_helper.addModul(&mqtt_publicer);
+#endif
 
     modul_helper.addModul(&ser);
     modul_helper.addModul(&modbus);
     modul_helper.addModul(&gpio);
 
-    modul_helper.addModul(&wifi);
-    modul_helper.addModul(&mqtt);
-    modul_helper.addModul(&mqtt_publicer);
+    
     
     static absolute_time_t timestamp;
     gpio.setBlink(1000,50);
@@ -143,7 +156,7 @@ int main()
                 }
             break;
             case 'm':
-                mqtt.public_msg("1","teplota");
+                //mqtt.public_msg("1","teplota");
             break;
 			case 'r':
 				puts("REBOOT\n");

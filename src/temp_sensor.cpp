@@ -8,7 +8,7 @@ TEMP_SENSOR::TEMP_SENSOR(int gpio):BASE_MODUL("temp_sensor"+std::to_string(gpio)
     oneWire->init();
 	gpio_init(gpio_data);
 	gpio_set_dir(gpio_data, GPIO_IN);
-	gpio_pull_up(gpio_data);
+	//gpio_pull_up(gpio_data);
 	sleep_ms(1);
 
 

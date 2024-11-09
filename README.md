@@ -18,6 +18,43 @@ Měření je prováděno každých 10s.
 Komunikace modbusem je potom v hlavním vlákně.
 
 
+## Propojení čidel teplot
+
+| T   | GPIO  |
+|-----|:-----:|
+| T1  | GPIO28|
+| T2  | GPIO27|
+| T3  | GPIO26|
+| T4  | GPIO18|
+| T5  | GPIO17|
+| T6  | GPIO16|
+| T7  | GPIO13|
+| T8  | GPIO12|
+| T9  | GPIO06|
+| T10 | GPIO05|
+| T11 | GPIO04|
+| T12 | GPIO03|
+
+## Adresace
+
+| A   | GPIO  |
+|-----|:-----:|
+| A0  | GPIO15|
+| A1  | GPIO14|
+| A2  | GPIO19|
+| A3  | GPIO20|
+| A4  | GPIO21|
+| A5  | GPIO22|
+
+
+## Kominikace
+
+| Fce | GPIO  |
+|-----|:-----:|
+| RX  | GPIO01|
+| TX  | GPIO00|
+| EN  | GPIO02|
+
 ## Mqtt
 Pokud je použit Raspberry pico "W" musí se nastavit v CmakeList.txt **set(PICO_BOARD "pico_w")**
 
