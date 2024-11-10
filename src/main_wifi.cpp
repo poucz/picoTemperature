@@ -23,6 +23,10 @@
 
 #include "pico-onewire/api/one_wire.h"
 
+#include "wifi.h"
+#include "mqtt_pou.h"
+
+
 
 std::vector<TEMP_SENSOR *> sensor_list;
 //#define USET_DUMMY_SERIAL_PORT
@@ -46,6 +50,40 @@ void mainCore2(){
 
 
 
+class MQTT_PUBLICER:public BASE_MODUL{
+public:
+    MQTT_PUBLICER(std::vector<TEMP_SENSOR *> temps, MQTT * mqtt_client, WIFI * wifi_modul):
+        BASE_MODUL("MqttPublic"),
+        sensors(temps),
+        mqtt(mqtt_client),
+        wifi(wifi_modul){
+    }
+protected:
+    std::vector<TEMP_SENSOR *> sensors;
+    MQTT * mqtt;
+    WIFI * wifi;
+    
+    void proces10S()override{
+        std::string value;
+        printf("MQTT publishing");
+        value="{";
+        for (std::vector<TEMP_SENSOR *>::iterator it = sensors.begin(); it != sensors.end(); ++it) {
+            int16_t temperature=(*it)->getTemp();
+            //mqtt->public_msg(num2str_deci(temperature),"Temp:"+num2str((*it)->getGpio()));
+            value+="\"T_"+num2str((*it)->getGpio())+"\":";
+            value+=num2str_deci(temperature)+",";
+        }
+        value+="\"signal\":"+num2str(wifi->getSignal());
+        value+="}";
+        printf("%s\n",value.c_str());
+        mqtt->public_msg(value,"picoTemp");
+    };
+
+    void proces60S()override{
+        
+    };
+};
+
 
 int main()
 {
@@ -53,7 +91,6 @@ int main()
     int userInput;
     MAIN_HELPER modul_helper;
 
-    
     
     sensor_list.push_back(new TEMP_SENSOR(28)); //GP28-T1
     sensor_list.push_back(new TEMP_SENSOR(27)); //GP27-T2
@@ -74,9 +111,15 @@ int main()
         SerialPico ser(true);
     #endif
 
+    MODBUS_API modbus(sensor_list,&ser,5);
     GPIO_PICO gpio;
-    MODBUS_API modbus(sensor_list,&ser,gpio.getAddress());
-    
+
+    WIFI wifi;
+    MQTT mqtt("192.168.2.86",1881);
+    MQTT_PUBLICER mqtt_publicer(sensor_list,&mqtt,&wifi);
+    modul_helper.addModul(&wifi);
+    modul_helper.addModul(&mqtt);
+    modul_helper.addModul(&mqtt_publicer);
 
     modul_helper.addModul(&ser);
     modul_helper.addModul(&modbus);
@@ -110,8 +153,8 @@ int main()
                     }
                 }
             break;
-            case 'a':
-                printf("Address %d\n",gpio.getAddress());
+            case 'm':
+                //mqtt.public_msg("1","teplota");
             break;
 			case 'r':
 				puts("REBOOT\n");

@@ -1,7 +1,14 @@
 cmake_minimum_required(VERSION 3.16)
 
 if(CMAKE_CXX_COMPILER MATCHES "arm")
-    set(SOURCE_FILES  main.cpp)
+    if (PICO_CYW43_SUPPORTED) 
+        set(SOURCE_FILES  main_wifi.cpp)
+        message("WIFI ACTIVATED - main_wifi.cpp")
+    else()
+        set(SOURCE_FILES  main.cpp)
+        message("WIFI DEACTIVATED - main.cpp")
+    endif()
+    
 else()
     message("CONFIG FOR LINUX")
     set(SOURCE_FILES ${SOURCE_FILES} main_linux.cpp)

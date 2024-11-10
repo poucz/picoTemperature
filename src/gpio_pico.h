@@ -9,6 +9,8 @@
 class GPIO_PICO: public GPIO_BASE{
 public:
     GPIO_PICO();
+    uint16_t getAddress() const;
+
 protected:
 
     const uint LED_PIN = 25;
