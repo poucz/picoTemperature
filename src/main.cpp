@@ -29,7 +29,7 @@
 
 
 std::vector<TEMP_SENSOR *> sensor_list;
-#define USET_DUMMY_SERIAL_PORT
+//#define USET_DUMMY_SERIAL_PORT
 
 
 void mainCore2(){
@@ -165,11 +165,13 @@ int main()
 			case PICO_ERROR_TIMEOUT:
 			break;
             default:
-                for(;userInput!=PICO_ERROR_TIMEOUT;){
-                    //printf("Appending %d\n",userInput);
-                    ser.receive(userInput);
-                    userInput = getchar_timeout_us(10);//us
-                }
+                #ifdef USET_DUMMY_SERIAL_PORT
+                    for(;userInput!=PICO_ERROR_TIMEOUT;){
+                        //printf("Appending %d\n",userInput);
+                        ser.receive(userInput);
+                        userInput = getchar_timeout_us(10);//us
+                    }
+                #endif
             break;
 		}
 	}
