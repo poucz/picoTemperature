@@ -3,7 +3,14 @@
 #include "hardware/gpio.h"
 
 
-TEMP_SENSOR::TEMP_SENSOR(int gpio):BASE_MODUL("temp_sensor"+std::to_string(gpio)),gpio_data(gpio),oneWire(nullptr),currentTemp_mut(0),sensorCount_mut(0){
+TEMP_SENSOR::TEMP_SENSOR(int gpio):
+    BASE_MODUL("temp_sensor"+std::to_string(gpio)),
+    gpio_data(gpio),
+    oneWire(nullptr),
+    currentTemp_mut(0),
+    sensorCount_mut(0),
+    cnt_read_error(0)
+{
     oneWire=new One_wire(gpio_data);
     oneWire->init();
 	gpio_init(gpio_data);
@@ -60,22 +67,52 @@ int TEMP_SENSOR::getGpio()const{
     return gpio_data;
 }
 
+
+void TEMP_SENSOR::setNewTemperature(const float & value,bool init_value){
+    if(init_value==true){
+        mutex_enter_blocking(&mutex_currentTemp);
+        currentTemp_mut= value;
+        mutex_exit(&mutex_currentTemp);
+    }
+    mutex_enter_blocking(&mutex_currentTemp);
+        currentTemp_mut= currentTemp_mut+((value-currentTemp_mut)*avrg_weight);
+    mutex_exit(&mutex_currentTemp);
+}
+
+/// @brief Prete teplotu z 1w, pokud je chyba zvíší hodnotu cnt_read_error+1, pokud tato hodnota překročí mez, nastaví tepluto za -255
+/// Pokud chyba odezní pak nastaví danou hodnotu
+/// Pokud hyba není tak se pouzije setNewTemperature() - napr moving average
 void TEMP_SENSOR::procesS(){
+    bool init_value=false;
     float temp=-255;
+
+    if(sensors_Address.size()==0){
+        setNewTemperature(temp,true);
+        return 0;
+    }
+
+
     for (rom_address_t addr : sensors_Address){
         temp=oneWire->temperature(addr,false);
         if(temp==oneWire->invalid_conversion || temp==oneWire->not_controllable){
-            temp=-255;
+            cnt_read_error++;
+        }else{
+            if(cnt_read_error!=0)
+                init_value=true;
+            cnt_read_error=0;
         }
         //printf("Gpio: %i sensor:%016llX\ttemp:%3.1f*C\n",gpio_data, One_wire::to_uint64(addr),temp);
     }
     rom_address_t null_addr;
     oneWire->convert_temperature(null_addr,false,true);
 
-    mutex_enter_blocking(&mutex_currentTemp);
-        currentTemp_mut=temp;
-    mutex_exit(&mutex_currentTemp);
+    if(cnt_read_error==0){
+        setNewTemperature(temp,init_value);
+    }else if(cnt_read_error > max_read_error){
+        setNewTemperature(temp,true);
+    }
 }
+
 
 
 

@@ -24,11 +24,16 @@ protected:
     mutable mutex_t mutex_currentTemp;
     float currentTemp_mut;
     int sensorCount_mut;///!< Promenna stejna jako sensors_Address.size() ale chranena mutexem
+    int cnt_read_error;///!< Kolikrat jsem vyčetl chybu místo teploty
+    static constexpr int max_read_error=5;///!<kolikrat může přijít chyba než začnu považovat senzor za neschopný
+    static constexpr float avrg_weight=0.1;///!<moving average coefiient
 
 
     int rescanAddress();///!< Je protected protoze bezim na jinem CPU
     void procesS() override;
     void proces60S() override;
+
+    void setNewTemperature(const float& value,bool init_value=false);///!<prida hodnotu do promenne currentTemp_mut - použije matematiku (průměr)
 };
 
 
