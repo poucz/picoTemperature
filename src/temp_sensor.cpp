@@ -33,8 +33,8 @@ int TEMP_SENSOR::rescanAddress(){
     //rom_address_t null_address{};
     int count = oneWire->find_and_count_devices_on_bus();
     for (int i = 0; i < count; i++) {
-		auto address = One_wire::get_address(i);
-        uint64_t addr=One_wire::to_uint64(address);
+		auto address = oneWire->get_address(i);
+        uint64_t addr=oneWire->to_uint64(address);
         sensors_Address.push_back(address);
 		printf("On gpio:%i sensors:%016llX\n",gpio_data, addr);
 	}
@@ -88,7 +88,7 @@ void TEMP_SENSOR::procesS(){
 
     if(sensors_Address.size()==0){
         setNewTemperature(temp,true);
-        return 0;
+        return ;
     }
 
 
