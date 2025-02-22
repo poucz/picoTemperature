@@ -155,8 +155,8 @@ int main()
     MODBUS_API modbus(sensor_list,&ser,5);
     GPIO_PICO_W gpio;
 
-    //WIFI wifi("jopr5","ytits1234");
-    WIFI wifi("jopr","ytits1234");
+    WIFI wifi("jopr5","ytits1234");
+    //WIFI wifi("jopr","ytits1234");
     MQTT_POU mqtt("192.168.3.30",1885,"tempHardvestor");
     MQTT_PUBLICER mqtt_publicer(sensor_list,&mqtt,&wifi);
     modul_helper.addModul(&wifi);
