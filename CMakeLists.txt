@@ -10,7 +10,7 @@ set(MQTT_SERVER_PORT 1883 CACHE INTERNAL "MQTT server port")
 
 if(CMAKE_CXX_COMPILER MATCHES "arm")
     message("CONFIG FOR RASPERRY PICO")
-    #set(PICO_BOARD "pico_w")
+    set(PICO_BOARD "pico_w")
     include(pico_sdk_import.cmake)
     
     pico_sdk_init()

@@ -10,6 +10,7 @@
 #include "pico/bootrom.h"
 
 #include <time.h>
+#include <queue>
 
 #include "jolibMainHelper.h"
 
@@ -52,38 +53,78 @@ void mainCore2(){
 
 class MQTT_PUBLICER:public BASE_MODUL{
 public:
-    MQTT_PUBLICER(std::vector<TEMP_SENSOR *> temps, MQTT * mqtt_client, WIFI * wifi_modul):
+    MQTT_PUBLICER(std::vector<TEMP_SENSOR *> temps, MQTT_POU * mqtt_client, WIFI * wifi_modul):
         BASE_MODUL("MqttPublic"),
         sensors(temps),
         mqtt(mqtt_client),
-        wifi(wifi_modul){
-    }
+        wifi(wifi_modul),
+        msg2send(20)
+        {
+
+            proces60S();
+        }
 protected:
     std::vector<TEMP_SENSOR *> sensors;
-    MQTT * mqtt;
+    MQTT_POU * mqtt;
     WIFI * wifi;
-    
-    void proces10S()override{
-        std::string value;
-        printf("MQTT publishing");
-        value="{";
-        for (std::vector<TEMP_SENSOR *>::iterator it = sensors.begin(); it != sensors.end(); ++it) {
-            int16_t temperature=(*it)->getTemp();
-            //mqtt->public_msg(num2str_deci(temperature),"Temp:"+num2str((*it)->getGpio()));
-            value+="\"T_"+num2str((*it)->getGpio())+"\":";
-            value+=num2str_deci(temperature)+",";
+    PouFIFO<MQTT_POU::MQTT_MSG_T> msg2send;
+
+
+    void procesS()override{
+        if(msg2send.empty()){
+            return;
         }
-        value+="\"signal\":"+num2str(wifi->getSignal());
-        value+="}";
-        printf("%s\n",value.c_str());
-        mqtt->public_msg(value,"picoTemp");
-    };
+
+        const MQTT_POU::MQTT_MSG_T & msg=msg2send.front();
+        msg2send.pop();
+
+        printf("public: %s %s\n",msg.topic.c_str(),msg.msg.c_str());
+        mqtt->public_msg(msg.msg,msg.topic);
+    }
+    
 
     void proces60S()override{
-        
+        MQTT_POU::MQTT_MSG_T msg;
+        for (std::vector<TEMP_SENSOR *>::iterator it = sensors.begin(); it != sensors.end(); ++it) {
+            int16_t temperature=(*it)->getTemp();
+
+            msg.topic="homeassistant/sensor/tempHardvestor/temperature"+num2str((*it)->getGpio())+"/state";
+            msg.msg=num2str_deci(temperature);
+            msg2send.push(msg);
+        }
+
+        msg.topic="homeassistant/sensor/tempHardvestor/linkQuality/state";
+        msg.msg=num2str(wifi->getSignal());
+        msg2send.push(msg);
+
     };
+
 };
 
+
+class GPIO_PICO_W: public GPIO_PICO{
+public:
+    GPIO_PICO_W():GPIO_PICO(),wifi(nullptr){}
+
+    void setWifi(WIFI * wifi_p){
+        wifi=wifi_p;
+    }
+protected:
+    virtual void setStatusLed(bool on) override{
+        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, on);
+    }
+
+    virtual void proces10S()override{
+        if(wifi!=nullptr){
+            if(wifi->errorCode()==0)
+                setBlink(1000,50);
+            else
+                setBlink(100,50);
+        }
+    }
+
+    WIFI * wifi;
+};
 
 int main()
 {
@@ -112,10 +153,11 @@ int main()
     #endif
 
     MODBUS_API modbus(sensor_list,&ser,5);
-    GPIO_PICO gpio;
+    GPIO_PICO_W gpio;
 
-    WIFI wifi;
-    MQTT mqtt("192.168.2.86",1881);
+    //WIFI wifi("jopr5","ytits1234");
+    WIFI wifi("jopr","ytits1234");
+    MQTT_POU mqtt("192.168.3.30",1885,"tempHardvestor");
     MQTT_PUBLICER mqtt_publicer(sensor_list,&mqtt,&wifi);
     modul_helper.addModul(&wifi);
     modul_helper.addModul(&mqtt);
@@ -128,7 +170,8 @@ int main()
     
     
     static absolute_time_t timestamp;
-    gpio.setBlink(1000,50);
+    gpio.setBlink(100,50);
+    gpio.setWifi(&wifi);
 
     multicore_launch_core1(mainCore2);
 
@@ -153,14 +196,19 @@ int main()
                     }
                 }
             break;
-            case 'm':
-                //mqtt.public_msg("1","teplota");
+            case 's':
+                printf("Subscribing....\n");
+                mqtt.subscribe_msg("test");
             break;
 			case 'r':
 				puts("REBOOT\n");
 				reset_usb_boot(0,0);
 			break;
+            case 'w':
+                wifi.print_status();
+            break;
 			case PICO_ERROR_TIMEOUT:
+            break;
 			break;
             default:
                 #ifdef USET_DUMMY_SERIAL_PORT
