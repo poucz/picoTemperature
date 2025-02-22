@@ -4,3 +4,5 @@
 [submodule "src/pico-onewire"]
 	path = src/pico-onewire
 	url = git@github.com:poucz/pico-onewire.git
+[submodule "pico-onewire"]
+	url = git@github.com:poucz/pico-onewire.git
