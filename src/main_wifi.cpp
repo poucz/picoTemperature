@@ -74,26 +74,30 @@ protected:
         if(msg2send.empty()){
             return;
         }
-
-        const MQTT_POU::MQTT_MSG_T & msg=msg2send.front();
-        msg2send.pop();
+        MQTT_POU::MQTT_MSG_T msg=msg2send.front();
 
         printf("public: %s %s\n",msg.topic.c_str(),msg.msg.c_str());
         mqtt->public_msg(msg.msg,msg.topic);
+        //mqtt->public_msg("tempHX",alffa);
+
+        msg2send.pop();
     }
     
 
     void proces60S()override{
         MQTT_POU::MQTT_MSG_T msg;
+        int i=1;
         for (std::vector<TEMP_SENSOR *>::iterator it = sensors.begin(); it != sensors.end(); ++it) {
             int16_t temperature=(*it)->getTemp();
 
-            msg.topic="homeassistant/sensor/tempHardvestor/temperature"+num2str((*it)->getGpio())+"/state";
+            //msg.topic="homeassistant/sensor/tempHardvestor/temperature"+num2str((*it)->getGpio())+"/state";
+            msg.topic="tempHardvestor/temperature"+num2str(i)+"/state";
             msg.msg=num2str_deci(temperature);
             msg2send.push(msg);
+            i++;
         }
 
-        msg.topic="homeassistant/sensor/tempHardvestor/linkQuality/state";
+        msg.topic="tempHardvestor/linkQuality/state";
         msg.msg=num2str(wifi->getSignal());
         msg2send.push(msg);
 
