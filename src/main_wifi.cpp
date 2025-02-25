@@ -92,7 +92,10 @@ protected:
 
             //msg.topic="homeassistant/sensor/tempHardvestor/temperature"+num2str((*it)->getGpio())+"/state";
             msg.topic="tempHardvestor/temperature"+num2str(i)+"/state";
-            msg.msg=num2str_deci(temperature);
+            if(temperature<-250)
+                msg.msg="unknown";
+            else
+                msg.msg=num2str_deci(temperature);
             msg2send.push(msg);
             i++;
         }
